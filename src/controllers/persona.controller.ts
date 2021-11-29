@@ -31,9 +31,9 @@ export class PersonaController {
     @repository(PersonaModelRepository)
     public personaModelRepository : PersonaModelRepository,
     @service(AutenticationService)
-    public servicioAutenticacion: AutenticationService
-    // @service(NotificationService)
-    // public notification_service: NotificationService
+    public servicioAutenticacion: AutenticationService,
+    @service(NotificationService)
+    public notification_service: NotificationService
   ) {}
 
   @post("/identificarPersona", {
