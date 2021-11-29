@@ -1,3 +1,4 @@
+import {authenticate} from '@loopback/authentication';
 import {
   Count,
   CountSchema,
@@ -20,6 +21,7 @@ import {
 import {ReparacionModel} from '../models';
 import {ReparacionModelRepository} from '../repositories';
 
+@authenticate("admin")
 export class ReparacionController {
   constructor(
     @repository(ReparacionModelRepository)

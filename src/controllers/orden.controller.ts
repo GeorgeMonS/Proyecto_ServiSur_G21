@@ -1,3 +1,4 @@
+import {authenticate} from '@loopback/authentication';
 import {
   Count,
   CountSchema,
@@ -20,11 +21,13 @@ import {
 import {OrdenModel} from '../models';
 import {OrdenModelRepository} from '../repositories';
 
+@authenticate("admin")
 export class OrdenController {
   constructor(
     @repository(OrdenModelRepository)
     public ordenModelRepository : OrdenModelRepository,
   ) {}
+
 
   @post('/ordenes')
   @response(200, {
@@ -57,7 +60,8 @@ export class OrdenController {
   ): Promise<Count> {
     return this.ordenModelRepository.count(where);
   }
-
+  
+  @authenticate.skip()
   @get('/ordenes')
   @response(200, {
     description: 'Array of OrdenModel model instances',

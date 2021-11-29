@@ -1,3 +1,4 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -16,15 +17,52 @@ import {
   del,
   requestBody,
   response,
+  HttpErrors,
 } from '@loopback/rest';
+import {Keys} from '../config/keys';
 import {PersonaModel} from '../models';
+import {Credenciales} from '../models/credenciales.model';
 import {PersonaModelRepository} from '../repositories';
+import {AutenticationService, NotificationService} from '../services';
+const fetch = require("node-fetch");
 
 export class PersonaController {
   constructor(
     @repository(PersonaModelRepository)
     public personaModelRepository : PersonaModelRepository,
+    @service(AutenticationService)
+    public servicioAutenticacion: AutenticationService
+    // @service(NotificationService)
+    // public notification_service: NotificationService
   ) {}
+
+  @post("/identificarPersona", {
+    responses:{
+      '200':{
+        description: "Identificación de usuarios"
+      }
+    }
+  })
+
+  async identificarPersona(
+    @requestBody() credenciales: Credenciales
+  ){
+    let p = await this.servicioAutenticacion.identificarPersona(credenciales.usuario, credenciales.clave)
+    if(p){
+      let token = this.servicioAutenticacion.GenerarTokenJWT(p);
+      return {
+        datos:{
+          nombre: p.nombres + " " + p.apellidos,
+          correo: p.email,
+          id: p.id
+        },
+        tk: token
+      }
+
+    }else{
+      throw new HttpErrors[401]("Datos inválidos");
+    }
+  }
 
   @post('/person')
   @response(200, {
@@ -44,7 +82,28 @@ export class PersonaController {
     })
     personaModel: Omit<PersonaModel, 'id'>,
   ): Promise<PersonaModel> {
-    return this.personaModelRepository.create(personaModel);
+
+    let clave = this.servicioAutenticacion.GenerarClave();
+    let claveCifrada = this.servicioAutenticacion.CifrarClave(clave);
+    personaModel.clave = claveCifrada;
+    let p = await this.personaModelRepository.create(personaModel);
+
+    //Notificar al usuario
+    let destino = personaModel.email;
+    let asunto = 'Registro en ServiSur';
+    let contenido = `Bienvenido ${personaModel.nombres} ${personaModel.apellidos} <br>
+    a ServiSur la empresa de reparación de electrodomesticos mas grande de Colombia. <br>
+    Sus datos de acceso al sistema son:<br>
+    <ul>
+      <li> Usuario:${personaModel.email}</li>
+      <li> Contraseña:${personaModel.clave}</li>
+    </ul>
+    Gracias por registrarse en nuestra empresa.`;
+    fetch(`${Keys.urlNotifications}/correos?destino=${destino}&asunto=${asunto}&contenido=${contenido}`)
+      .then((data: any)=>{
+        console.log(data);
+      })
+    return p;
   }
 
   @get('/person/count')

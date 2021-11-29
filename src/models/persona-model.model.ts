@@ -33,6 +33,17 @@ export class PersonaModel extends Entity {
   })
   telefono: string;
 
+  @property({
+    type: 'string',
+    required: true,
+  })
+  email: string;
+
+  @property({
+    type: 'string',
+    required: false,
+  })
+  clave: string;
 
   constructor(data?: Partial<PersonaModel>) {
     super(data);

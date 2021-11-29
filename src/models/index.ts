@@ -4,3 +4,4 @@ export * from './orden-model.model';
 export * from './cliente-model.model';
 export * from './revision-model.model';
 export * from './reparacion-model.model';
+export * from './credenciales.model';
